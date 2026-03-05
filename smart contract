@@ -1,0 +1,60 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+/**
+ * @title NotariaDigital
+ * @dev Contrato para registrar y verificar la existencia de documentos mediante hashes.
+ */
+contract NotariaDigital {
+    
+    // Estructura de datos para almacenar la información de cada documento
+    struct Documento {
+        address propietario;
+        uint256 fechaCreacion;
+        bool existe;
+    }
+
+    // Mapeo para asociar el hash del documento (bytes32) con su información
+    mapping(bytes32 => Documento) private registroDocumentos;
+
+    // Evento emitido cada vez que se certifica un nuevo documento
+    event DocumentoCertificado(bytes32 indexed hashDocumento, address indexed propietario, uint256 fecha);
+
+    /**
+     * @dev Registra el hash de un documento en la blockchain.
+     * @param _hashDocumento El hash (ej. SHA256 generado off-chain) del archivo.
+     */
+    function certificarDocumento(bytes32 _hashDocumento) public {
+        require(!registroDocumentos[_hashDocumento].existe, "Error: El documento ya esta certificado.");
+
+        registroDocumentos[_hashDocumento] = Documento({
+            propietario: msg.sender,
+            fechaCreacion: block.timestamp,
+            existe: true
+        });
+
+        emit DocumentoCertificado(_hashDocumento, msg.sender, block.timestamp);
+    }
+
+    /**
+     * @dev Verifica el estado de un documento previamente certificado.
+     * @param _hashDocumento El hash del archivo a verificar.
+     * @return existe Verdadero si el documento está registrado.
+     * @return propietario Dirección de la billetera que lo registró.
+     * @return fechaCreacion Timestamp del bloque de registro.
+     */
+    function verificarDocumento(bytes32 _hashDocumento) public view returns (bool existe, address propietario, uint256 fechaCreacion) {
+        Documento memory doc = registroDocumentos[_hashDocumento];
+        return (doc.existe, doc.propietario, doc.fechaCreacion);
+    }
+
+    /**
+     * @dev Funcion auxiliar exclusiva para facilitar pruebas directas en Remix.
+     * Convierte una cadena de texto en un hash bytes32 (Keccak256).
+     * @param _texto Texto de prueba a procesar.
+     * @return Hash en formato bytes32 listo para ser usado en certificarDocumento.
+     */
+    function generarHashDePrueba(string memory _texto) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_texto));
+    }
+}
