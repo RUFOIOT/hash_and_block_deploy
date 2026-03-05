@@ -1,0 +1,8 @@
+/**
+     * @dev Función auxiliar para pruebas en Remix. Genera un hash Keccak256.
+     * @param _texto Texto de prueba.
+     * @return El hash en formato bytes32 listo para certificar.
+     */
+    function generarHashPrueba(string memory _texto) public pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_texto));
+    }
